@@ -39,23 +39,46 @@ function drupal_extra_js_alter(&$javascript) {
 
 // computed_field_recalculate_field("users", "user", user_load(1), 'field_balance');
 function computed_field_recalculate_field($table, $type, $entity, $field_name) {
+  static $calculated;
   $info = entity_get_info();
   $idkey = $info[$type]['entity keys']['id'];
-  $entities_by_type = array($type => array($type));
+  $bundlekey = $info[$type]['entity keys']['bundle'];
+  $bundle = $entity->{$bundlekey};
+  $entities_by_type = array($type => array($bundle));
   $entities_per_run = 1;
+
+  $itemkey = $table . $type . $entity->{$idkey};
+  if (isset($calculated[$itemkey])) {
+    return ;
+  }
+  $calculated[$itemkey] = TRUE;
+
   $context = array();
   $context['sandbox']['offsets_by_type'] = array();
-  $query = db_select($table, 'n')
-    ->condition('n.' . $idkey, $entity->{$idkey}, '=')
-    ->orderBy('n.' . $idkey, 'ASC');
-  $offset = $query->countQuery()->execute()->fetchField();
-  $context['sandbox']['offsets_by_type'][$type]['offset'] = $offset - 1;
-  $context['sandbox']['offsets_by_type'][$type]['types'] = array($type);
-  $context['sandbox']['max_ids'] = array('user' => $entity->{$idkey});
+  $context['sandbox']['offsets_by_type'][$type]['offset'] = _help_offset_entity($table, $type, $entity, $field_name, $bundle);
+  $context['sandbox']['offsets_by_type'][$type]['types'] = array($bundle);
+  $context['sandbox']['max_ids'] = array($type => $entity->{$idkey});
   $context['results']['total_entities_touched'] = 0;
   $context['results']['start'] = REQUEST_TIME;
   $context['results']['end'] = 0;
   $context['results']['total_id_count'] = 1;
 
   _computed_field_tools_batch_recompute($entities_by_type, $field_name, $entities_per_run, $context);
+}
+
+function _help_offset_entity($table, $type, $entity, $field_name, $bundle) {
+  if ($type != 'taxonomy_term') {
+    return 0;
+  }
+  $vids = db_select('taxonomy_vocabulary', 'tv')
+    ->fields('tv', array('vid'))
+    ->condition('machine_name', array($bundle), 'IN')
+    ->execute()
+    ->fetchCol();
+
+  $query = db_select('taxonomy_term_data', 'n')
+    ->condition('n.tid', $entity->tid, '<')
+    ->condition('vid', $vids, 'IN')
+    ->orderBy('n.tid', 'ASC');
+  return $query->countQuery()->execute()->fetchField();
 }
