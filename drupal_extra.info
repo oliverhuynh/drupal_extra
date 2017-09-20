@@ -1,0 +1,6 @@
+name = Drupal Extra
+description = TODO: Move to Drupal Extra name
+core = 7.x
+package = Fields
+
+dependencies[] = conditional_fields
