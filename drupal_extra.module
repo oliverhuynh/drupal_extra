@@ -1,6 +1,35 @@
 <?php
 
 /**
+ * Implementation of hook_views_query_alter
+ * @param type $view
+ * @param type $query
+ */
+function drupal_extra_views_query_alter(&$view, &$query) {
+  if (is_array($view->relationship)) {
+    foreach ($view->relationship as $k => $v) {
+      // dextra|table:field_all_turns FEATURE
+      if (strpos($v->options['ui_name'], 'dextra') !== FALSE) {
+        list(, $options) = explode("|", $v->options['ui_name']);
+        $options = explode(",", $options);
+        $options = array_map("trim", $options);
+        $options = array_reduce($options, function ($result, $item) {
+          $item = explode(":", $item);
+          $result[$item[0]] = $item[1];
+          return $result;
+        }, array());
+        if (isset($options['table'])) {
+          $table = $v->table;
+          if (isset($query->table_queue[$table])) {
+            $query->table_queue[$table]['join']->table = $query->table_queue[$table]['table'] = $options['table'];
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
 TODO: MOve states_extra to this module
  * Implement of hook_page_alter
  */
