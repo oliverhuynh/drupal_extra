@@ -10,14 +10,7 @@ function drupal_extra_views_query_alter(&$view, &$query) {
     foreach ($view->relationship as $k => $v) {
       // dextra|table:field_all_turns FEATURE
       if (strpos($v->options['ui_name'], 'dextra') !== FALSE) {
-        list(, $options) = explode("|", $v->options['ui_name']);
-        $options = explode(",", $options);
-        $options = array_map("trim", $options);
-        $options = array_reduce($options, function ($result, $item) {
-          $item = explode(":", $item);
-          $result[$item[0]] = $item[1];
-          return $result;
-        }, array());
+        $options = drupal_extra_to_options($v->options['ui_name']);
         if (isset($options['table'])) {
           $table = $v->table;
           if (isset($query->table_queue[$table])) {
@@ -27,6 +20,18 @@ function drupal_extra_views_query_alter(&$view, &$query) {
       }
     }
   }
+}
+
+function drupal_extra_to_options($string) {
+  list(, $options) = strpos($string, "|") !== FALSE ? explode("|", $string) : array(0, $string);
+  $options = explode(",", $options);
+  $options = array_map("trim", $options);
+  $options = array_reduce($options, function ($result, $item) {
+    $item = explode(":", $item);
+    $result[$item[0]] = isset($item[2]) ? $item : $item[1];
+    return $result;
+  }, array());
+  return $options;
 }
 
 /**
@@ -66,13 +71,26 @@ function drupal_extra_js_alter(&$javascript) {
   }
 }
 
+
+function computed_field_recalculate_field_simple($entity, $type, $field) {
+  static $info;
+  $info = isset($info) ? $info : entity_get_info();
+  return computed_field_recalculate_field($info[$type]['base table'], $type, $entity, $field);
+}
+
 // computed_field_recalculate_field("users", "user", user_load(1), 'field_balance');
 function computed_field_recalculate_field($table, $type, $entity, $field_name) {
   static $calculated;
   $info = entity_get_info();
   $idkey = $info[$type]['entity keys']['id'];
   $bundlekey = $info[$type]['entity keys']['bundle'];
-  $bundle = $entity->{$bundlekey};
+  if (!isset($entity->{$bundlekey})) {
+    $bundle = $type;
+  }
+  else {
+    $bundle = $entity->{$bundlekey};
+  }
+
   $entities_by_type = array($type => array($bundle));
   $entities_per_run = 1;
 

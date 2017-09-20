@@ -1,0 +1,4 @@
+name = Computed Field Extra
+description = Computed Field Extra
+package = Fields
+core = 7.x

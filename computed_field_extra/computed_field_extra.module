@@ -1,0 +1,66 @@
+<?php
+
+/**
+ * Implement of hook_entity_insert()
+ */
+function computed_field_extra_entity_insert($entity, $type) {
+  computed_field_extra_refresh_hook($entity, $type);
+}
+/**
+ * Implement of hook_entity_update()
+ */
+function computed_field_extra_entity_update($entity, $type) {
+  computed_field_extra_refresh_hook($entity, $type);
+}
+
+/**
+ * Implement of hook_entity_delete()
+ */
+function computed_field_extra_entity_delete($entity, $type) {
+  computed_field_extra_refresh_hook($entity, $type);
+}
+
+function computed_field_extra_refresh_hook($entity, $type) {
+  $fields = field_info_fields();
+  foreach ($fields as $field => $field_setting) {
+    if ($field_setting['module'] == 'computed_field' && isset($field_setting['settings']['entity_refresh']) && $field_setting['settings']['entity_refresh']) {
+      $options = drupal_extra_to_options($field_setting['settings']['entity_refresh']);
+      foreach ($options as $key => $settings) {
+        if ($type == $key) {
+          $authorentity = FALSE;
+          if (is_array($settings)) {
+            if (isset($entity->{$authorfield}[LANGUAGE_NONE][0]['target_id'])) {
+              $authorfield = $settings[2];
+              $authorentityid = $entity->{$authorfield}[LANGUAGE_NONE][0]['target_id'];
+              $authorentity = entity_load_single($settings[3], $authorentityid);
+            }
+          }
+          else {
+            $authorentity = $entity;
+          }
+
+          if ($authorentity && isset($authorentity->uid) && $authorentity->uid) {
+            $account = user_load($authorentity->uid);
+            if ($account) {
+              computed_field_recalculate_field_simple($account, 'user', $field);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implement of hook_form_field_ui_field_edit_form_alter()
+ */
+function computed_field_extra_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['#field']) && $form['#field']['module'] == 'computed_field') {
+    $form['field']['settings']['entity_refresh'] = array(
+      '#type' => 'textfield',
+      '#description' => t("Enter entity type here to get this field recalculated whenever there is a change of this type. type:bundle,type2:bundle2"),
+      '#title' => t('Entity refresh'),
+      '#default_value' => isset($form['#field']['settings']['entity_refresh']) ? $form['#field']['settings']['entity_refresh'] : '',
+    );
+  }
+}
