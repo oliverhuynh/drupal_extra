@@ -24,6 +24,7 @@ function views_summarize_extra_views_summarize_type_currency($variables) {
  * Display a view as a table summary.
  */
 function views_summarize_extra_preprocess_views_summarize_views_tablesummarized(&$vars) {
+  drupal_add_css('https://s3-us-west-2.amazonaws.com/colors-css/2.2.0/colors.min.css', array('type' => 'external'));
   $first = key($vars['summarized']);
   $vars['summarized'][$first] = t("Total");
 }
