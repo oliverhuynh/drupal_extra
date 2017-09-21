@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function views_summarize_extra_theme_registry_alter(&$theme_registry) {
+  if (isset($theme_registry['views_summarize_type_currency'])) {
+    $theme_registry['views_summarize_type_currency']['function'] = 'views_summarize_extra_views_summarize_type_currency';
+  }
+}
+
+function views_summarize_extra_views_summarize_type_currency($variables) {
+  $data = $variables['data'];
+  $total = 0;
+  foreach ($data as $val) {
+    // This allows for negative values and values w/commas to be added
+    // correctly.
+    $total += (float) preg_replace('/[^0-9\.\-]/', '', $val);
+  }
+  return '$' . number_format($total, 2);
+}
+
+/**
+ * Display a view as a table summary.
+ */
+function views_summarize_extra_preprocess_views_summarize_views_tablesummarized(&$vars) {
+  $first = key($vars['summarized']);
+  $vars['summarized'][$first] = t("Total");
+}

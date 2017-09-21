@@ -29,8 +29,8 @@ function computed_field_extra_refresh_hook($entity, $type) {
         if ($type == $key) {
           $authorentity = FALSE;
           if (is_array($settings)) {
+            $authorfield = $settings[2];
             if (isset($entity->{$authorfield}[LANGUAGE_NONE][0]['target_id'])) {
-              $authorfield = $settings[2];
               $authorentityid = $entity->{$authorfield}[LANGUAGE_NONE][0]['target_id'];
               $authorentity = entity_load_single($settings[3], $authorentityid);
             }
