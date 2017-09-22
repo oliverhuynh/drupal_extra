@@ -1,3 +1,4 @@
 name = Views Summarize Extra
 description = Views Summarize Extra
 core = 7.x
+files[] = includes/views_summarize_extra_plugin_style_tablesummarized.inc

@@ -1,6 +1,16 @@
 <?php
 
 /**
+ * Implements hook_views_api().
+ */
+function views_summarize_extra_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'views_summarize_extra') . '/includes',
+  );
+}
+
+/**
  * Implements hook_theme_registry_alter().
  */
 function views_summarize_extra_theme_registry_alter(&$theme_registry) {
@@ -13,11 +23,26 @@ function views_summarize_extra_views_summarize_type_currency($variables) {
   $data = $variables['data'];
   $total = 0;
   foreach ($data as $val) {
+    if (strpos($val, 'hidden:') !== FALSE) {
+      $val = GetBetween('<!--hidden:', '-->', $val);
+      $val = str_replace("-", "", $val);
+    }
     // This allows for negative values and values w/commas to be added
     // correctly.
     $total += (float) preg_replace('/[^0-9\.\-]/', '', $val);
   }
   return '$' . number_format($total, 2);
+}
+
+function GetBetween($var1="",$var2="",$pool){
+    $temp1 = strpos($pool,$var1)+strlen($var1);
+    $result = substr($pool,$temp1,strlen($pool));
+    $dd=strpos($result,$var2);
+    if($dd == 0){
+        $dd = strlen($result);
+    }
+
+    return substr($result,0,$dd);
 }
 
 /**
@@ -27,4 +52,18 @@ function views_summarize_extra_preprocess_views_summarize_views_tablesummarized(
   drupal_add_css('https://s3-us-west-2.amazonaws.com/colors-css/2.2.0/colors.min.css', array('type' => 'external'));
   $first = key($vars['summarized']);
   $vars['summarized'][$first] = t("Total");
+
+  // Column classes
+  foreach ($vars['field_classes'] as $key => $data) {
+    if (!isset($vars['header_classes'][$key])) {
+      continue ;
+    }
+    $class = current($data);
+    if (!$class) {
+       continue ;
+    }
+    $vars['header_classes'][$key] = $class;
+  }
+
+  $vars['footer_classes'] = $vars['header_classes'];
 }

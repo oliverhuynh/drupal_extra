@@ -16,20 +16,73 @@ function drupal_extra_views_api() {
  * @param type $query
  */
 function drupal_extra_views_query_alter(&$view, &$query) {
+  if (is_array($view->filter)) {
+    foreach ($view->filter as $k => $v) {
+      __drupal_extra_views_query_alter($view, $query, $v);
+    }
+  }
   if (is_array($view->relationship)) {
     foreach ($view->relationship as $k => $v) {
       // dextra|table:field_all_turns FEATURE
-      if (strpos($v->options['ui_name'], 'dextra') !== FALSE) {
-        $options = drupal_extra_to_options($v->options['ui_name']);
-        if (isset($options['table'])) {
-          $table = $v->table;
-          if (isset($query->table_queue[$table])) {
-            $query->table_queue[$table]['join']->table = $query->table_queue[$table]['table'] = $options['table'];
+      __drupal_extra_views_query_alter($view, $query, $v);
+    }
+  }
+}
+function __drupal_extra_views_query_alter(&$view, &$query, $v) {
+  if (isset($v->options['ui_name']) && $v->options['ui_name'] && strpos($v->options['ui_name'], 'dextra') !== FALSE) {
+    $options = drupal_extra_to_options($v->options['ui_name']);
+    if (isset($options['equal']) || isset($options['contain'])) {
+      $field = $v->table_alias . '.' . $v->field;
+      foreach ($query->where as $key => $cond) {
+        if (!isset($cond['conditions'])) {
+          continue ;
+        }
+        foreach ($cond['conditions'] as $subkey => $subcond) {
+          if (!isset($subcond['field'])) {
+            continue ;
+          }
+          if ($subcond['field'] == $field && $subcond['operator'] == 'IS NOT NULL') {
+            $query->where[$key]['conditions'][$subkey]['operator'] = 'LIKE';
+            $date = drupal_extra_views_get_argument_smart($view, 'date');
+            $query->where[$key]['conditions'][$subkey]['value'] = '%' . $date;
           }
         }
       }
     }
+    if (isset($options['table'])) {
+      $table = $v->table;// Consider to use $v->alias Could buggy here
+      if (isset($query->table_queue[$table])) {
+        $query->table_queue[$table]['join']->table = $query->table_queue[$table]['table'] = $options['table'];
+      }
+    }
+    if (isset($options['morejoin'])) {
+      unset($query->table_queue['field_data_field_agent']);
+      $table = $v->alias;// Consider to use $v->alias Could buggy here
+      if (isset($query->table_queue[$table])) {
+        $query->table_queue[$table]['join']->table = $query->table_queue[$table]['table'] = 'eck_daily_report_agents';
+        $query->table_queue[$table]['join']->left_table = 'users';
+        $query->table_queue[$table]['join']->left_field = 'uid';
+        $query->table_queue[$table]['join']->field = 'field_agent_target_id';
+      }
+    }
+    if (isset($options['join'])) {
+      $table = $v->alias;
+      $date = drupal_extra_views_get_argument_smart($view, 'date');
+
+      $query->table_queue[$table]['join']->extra = array('' . $table . '.title LIKE \'%'. $date .'\'');
+    }
   }
+}
+
+function drupal_extra_views_get_argument_smart($view, $key) {
+  $date = isset($view->args[0]) ? $view->args[0] : '';
+  if (isset($view->exposed_input[$key])) {
+    $date = $view->exposed_input[$key];
+  }
+  else if (isset($_GET[$key])) {
+    $date = $_GET[$key];
+  }
+  return $date;
 }
 
 function drupal_extra_to_options($string) {

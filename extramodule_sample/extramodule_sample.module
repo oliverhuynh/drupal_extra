@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * Implements hook_views_api().
+ */
+function extramodule_sample_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'extramodule_sample') . '/includes',
+  );
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function extramodule_sample_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'views_data_alter') {
+    $group = $implementations['extramodule_sample'];
+    unset($implementations['extramodule_sample']);
+    $implementations['extramodule_sample'] = $group;
+  }
+}

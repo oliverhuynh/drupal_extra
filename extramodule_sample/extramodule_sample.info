@@ -1,0 +1,5 @@
+name = Editable Fields Extra
+description = Editable Fields Extra
+core = 7.x
+files[] = includes/extramodule_sample_handler_field_field_edit.inc
+dependencies[] = editablefields
