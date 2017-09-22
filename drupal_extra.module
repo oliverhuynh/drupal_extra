@@ -193,8 +193,8 @@ function _help_offset_entity($table, $type, $entity, $field_name, $bundle) {
   return $query->countQuery()->execute()->fetchField();
 }
 
-function drupal_extra_create_field_all_view($fieldname) {
-  return db_query("CREATE VIEW field_data_{$fieldname}_value_all AS
-  SELECT *, GROUP_CONCAT(DISTINCT CONCAT('(', {$fieldname}_value, ')') SEPARATOR '+') as {$fieldname}_value_merged FROM {field_data_{$fieldname}}
+function drupal_extra_create_field_all_view($fieldname, $key) {
+  return db_query("CREATE VIEW field_data_{$fieldname}_all AS
+  SELECT *, GROUP_CONCAT(DISTINCT CONCAT('(', {$fieldname}_{$key}, ')') SEPARATOR '+') as {$fieldname}_merged FROM {field_data_{$fieldname}}
   GROUP BY entity_id");
 }
