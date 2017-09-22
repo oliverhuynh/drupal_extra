@@ -16,6 +16,11 @@ function drupal_extra_views_api() {
  * @param type $query
  */
 function drupal_extra_views_query_alter(&$view, &$query) {
+  if (is_array($view->argument)) {
+    foreach ($view->argument as $k => $v) {
+      __drupal_extra_views_query_alter($view, $query, $v);
+    }
+  }
   if (is_array($view->filter)) {
     foreach ($view->filter as $k => $v) {
       __drupal_extra_views_query_alter($view, $query, $v);
@@ -29,7 +34,7 @@ function drupal_extra_views_query_alter(&$view, &$query) {
   }
 }
 function __drupal_extra_views_query_alter(&$view, &$query, $v) {
-  if (isset($v->options['ui_name']) && $v->options['ui_name'] && strpos($v->options['ui_name'], 'dextra') !== FALSE) {
+  if (isset($v->options['ui_name']) && $v->options['ui_name'] && substr($v->options['ui_name'], 0, 6) == 'dextra') {
     $options = drupal_extra_to_options($v->options['ui_name']);
     if (isset($options['equal']) || isset($options['contain'])) {
       $field = $v->table_alias . '.' . $v->field;
@@ -70,6 +75,56 @@ function __drupal_extra_views_query_alter(&$view, &$query, $v) {
       $date = drupal_extra_views_get_argument_smart($view, 'date');
 
       $query->table_queue[$table]['join']->extra = array('' . $table . '.title LIKE \'%'. $date .'\'');
+    }
+    if (isset($options['fieldcompare'])) {
+      _scan_conditions($query, '__fieldcompare_valid', '__fieldcompare_execute');
+    }
+  }
+}
+
+function __fieldcompare_valid($subcond) {
+  return is_string($subcond["field"]) && strpos($subcond["field"], ".field_people_category_tid") !== FALSE;
+}
+
+function __fieldcompare_execute(&$subcond) {
+  if ($subcond["operator"] == "formula") {
+    if (is_array($subcond["value"])) {
+      foreach ($subcond["value"] as $key => $val_arr) {
+        if (!is_array($val_arr)) {
+          $val_arr = array($val_arr);
+        }
+
+        foreach ($val_arr as &$val) {
+          $val = "(". $val .")";
+        }
+        $subcond["value"][$key] = implode("|", $val_arr);
+      }
+    }
+    $subcond["field"] = str_replace(".field_people_category_tid",".field_people_category_merged", $subcond["field"]);
+    $subcond["field"] = str_replace("("," ", $subcond["field"]);
+    $subcond["field"] = str_replace(")","", $subcond["field"]);
+    $subcond["field"] = str_replace(" ="," REGEXP", $subcond["field"]);
+    $subcond["field"] = str_replace(" !="," NOT REGEXP", $subcond["field"]);
+    $subcond["field"] = str_replace(" IN"," REGEXP", $subcond["field"]);
+    return ;
+  }
+  $subcond["field"] = str_replace(".field_people_category_tid",".field_people_category_merged", $subcond["field"]);
+  $subcond["value"] = "%(". $subcond["value"] .")%";
+  $subcond["operator"] = "LIKE";
+}
+
+function _scan_conditions($query, $matchcallback, $callback) {
+  foreach ($query->where as $key => $cond) {
+    if (!isset($cond['conditions'])) {
+      continue ;
+    }
+    foreach ($cond['conditions'] as $subkey => $subcond) {
+      if (!isset($subcond['field'])) {
+        continue ;
+      }
+      if ($matchcallback($subcond)) {
+        $callback($query->where[$key]['conditions'][$subkey], $key, $subkey);
+      }
     }
   }
 }
