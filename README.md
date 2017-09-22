@@ -10,6 +10,8 @@ CREATE VIEW field_tir_all AS
 dextra|table:field_tir_all
 
 New merge table for field
-CREATE VIEW field_betting_value_all AS
+CREATE VIEW field_data_field_betting_value_all AS
   SELECT *, GROUP_CONCAT(DISTINCT CONCAT("(", field_betting_value, ")") SEPARATOR '+') as field_betting_value_merged FROM `field_data_field_betting`
   GROUP BY entity_id
+OR use this API
+drupal_extra_create_field_all_view("field_betting");
