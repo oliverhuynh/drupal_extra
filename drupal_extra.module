@@ -180,7 +180,7 @@ function drupal_extra_js_alter(&$javascript) {
 /**
  * Helper hook_js_alter
  */
-function _help_add_js(&$javascript, $depend, $new, $ajax_extra) {
+function _help_add_js(&$javascript, $depend, $ajax_extra) {
   if (array_key_exists($depend, $javascript)) {
     $javascript[$ajax_extra] = $javascript[$depend];
     $javascript[$ajax_extra]['data'] = $ajax_extra;

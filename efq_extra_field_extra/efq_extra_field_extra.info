@@ -1,0 +1,5 @@
+name = EntityFieldQuery Extra
+description = EntityFieldQuery Extra
+core = 7.x
+dependencies[] = efq_extra_field
+files[] = EntityFieldQuerySpecialExtra.inc
