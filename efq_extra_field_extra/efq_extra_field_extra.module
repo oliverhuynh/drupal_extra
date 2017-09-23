@@ -1,1 +1,4 @@
 <?php
+
+// js error
+require "EntityFieldQuerySpecialExtra.inc";
