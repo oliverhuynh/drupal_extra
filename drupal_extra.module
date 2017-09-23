@@ -153,14 +153,6 @@ function drupal_extra_to_options($string) {
 }
 
 /**
-TODO: MOve states_extra to this module
- * Implement of hook_page_alter
- */
-function drupal_extra_page_alter() {
-  drupal_add_js(drupal_get_path('module', 'drupal_extra') . '/conditional_fields_extra.js');
-}
-
-/**
  * Implement of hook_conditional_fields_states_alter
  */
 function drupal_extra_conditional_fields_states_alter(&$states) {
@@ -181,14 +173,20 @@ function drupal_extra_conditional_fields_conditions_alter(&$conditions) {
  * Implement of hook_js_alter
  */
 function drupal_extra_js_alter(&$javascript) {
-  if (array_key_exists('misc/ajax.js', $javascript)) {
-    $ajax_extra = drupal_get_path("module", "drupal_extra") . "/ajax.extra.js";
-    $javascript[$ajax_extra] = $javascript['misc/ajax.js'];
+  _help_add_js($javascript, "misc/ajax.js", drupal_get_path("module", "drupal_extra") . "/ajax.extra.js");
+  _help_add_js($javascript, drupal_get_path("module", "conditional_fields") . "/js/conditional_fields.js", drupal_get_path("module", "drupal_extra") . "/conditional_fields_extra.js");
+}
+
+/**
+ * Helper hook_js_alter
+ */
+function _help_add_js(&$javascript, $depend, $new, $ajax_extra) {
+  if (array_key_exists($depend, $javascript)) {
+    $javascript[$ajax_extra] = $javascript[$depend];
     $javascript[$ajax_extra]['data'] = $ajax_extra;
     $javascript[$ajax_extra]['weight']++;
   }
 }
-
 
 function computed_field_recalculate_field_simple($entity, $type, $field) {
   static $info;
