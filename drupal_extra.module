@@ -210,7 +210,7 @@ function computed_field_recalculate_field($table, $type, $entity, $field_name) {
   $entities_by_type = array($type => array($bundle));
   $entities_per_run = 1;
 
-  $itemkey = $table . $type . $entity->{$idkey};
+  $itemkey = $table . $type . $entity->{$idkey} . $field_name;
   if (isset($calculated[$itemkey])) {
     return ;
   }

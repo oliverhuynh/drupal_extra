@@ -20,6 +20,43 @@ function computed_field_extra_entity_delete($entity, $type) {
   computed_field_extra_refresh_hook($entity, $type);
 }
 
+function _load_authorentities($entity, $settings) {
+  $authorentities = array();
+  if (is_array($settings)) {
+    $lastkey = $settings[2];
+    $update_entity_type = $settings[3];
+    foreach ($entity as $ekey => $efield) {
+      if (substr($ekey, - strlen($lastkey)) != $lastkey || !is_array($efield)) {
+        continue ;
+      }
+      $authorfield = $ekey;
+      if (isset($entity->{$authorfield}[LANGUAGE_NONE][0]['target_id'])) {
+        foreach ($entity->{$authorfield}[LANGUAGE_NONE] as $subkey => $subitem) {
+          if (isset($subitem['target_id'])) {
+            $authorentityid = $subitem['target_id'];
+            $authorentity = entity_load_single($update_entity_type, $authorentityid);
+            if (!$authorentity) {
+              continue ;
+            }
+
+            // Allow to load one more level child
+            if (isset($settings[4])) {
+              $newsetting = array("", "", $settings[4], $settings[5]);
+              $authorentities = array_merge($authorentities, _load_authorentities($authorentity, $newsetting));
+            }
+            else {
+              $authorentities[] = $authorentity;
+            }
+          }
+        }
+      }
+    }
+  }
+  else {
+    $authorentities[] = $entity;
+  }
+  return $authorentities;
+}
 function computed_field_extra_refresh_hook($entity, $type) {
   $fields = field_info_fields();
   foreach ($fields as $field => $field_setting) {
@@ -27,22 +64,11 @@ function computed_field_extra_refresh_hook($entity, $type) {
       $options = drupal_extra_to_options($field_setting['settings']['entity_refresh']);
       foreach ($options as $key => $settings) {
         if ($type == $key) {
-          $authorentity = FALSE;
-          if (is_array($settings)) {
-            $authorfield = $settings[2];
-            if (isset($entity->{$authorfield}[LANGUAGE_NONE][0]['target_id'])) {
-              $authorentityid = $entity->{$authorfield}[LANGUAGE_NONE][0]['target_id'];
-              $authorentity = entity_load_single($settings[3], $authorentityid);
-            }
-          }
-          else {
-            $authorentity = $entity;
-          }
+          $authorentities = _load_authorentities($entity, $settings);
 
-          if ($authorentity && isset($authorentity->uid) && $authorentity->uid) {
-            $account = user_load($authorentity->uid);
-            if ($account) {
-              computed_field_recalculate_field_simple($account, 'user', $field);
+          if ($authorentities) {
+            foreach ($authorentities as $authorentity) {
+              computed_field_recalculate_field_simple($authorentity, (isset($authorentity->type) ? $authorentity->type : 'user'), $field);
             }
           }
         }
@@ -51,6 +77,8 @@ function computed_field_extra_refresh_hook($entity, $type) {
   }
 }
 
+
+
 /**
  * Implement of hook_form_field_ui_field_edit_form_alter()
  */
@@ -58,7 +86,9 @@ function computed_field_extra_form_field_ui_field_edit_form_alter(&$form, &$form
   if (isset($form['#field']) && $form['#field']['module'] == 'computed_field') {
     $form['field']['settings']['entity_refresh'] = array(
       '#type' => 'textfield',
-      '#description' => t("Enter entity type here to get this field recalculated whenever there is a change of this type. type:bundle,type2:bundle2"),
+      '#description' => t("Enter entity type here to get this field recalculated whenever there is a change of this type. Ex1: type:bundle,type2:bundle2
+      Ex2: type3:bundle3:_field_last_string:data_type_of_field
+      Ex3: type4:bundle4:_field_last_string:data_type_of_field:field_player_item:data_type_of_3rd_field"),
       '#title' => t('Entity refresh'),
       '#default_value' => isset($form['#field']['settings']['entity_refresh']) ? $form['#field']['settings']['entity_refresh'] : '',
     );
