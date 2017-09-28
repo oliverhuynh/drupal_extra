@@ -17,23 +17,27 @@ function drupal_extra_views_api() {
  */
 function drupal_extra_views_query_alter(&$view, &$query) {
   if (is_array($view->argument)) {
+    $count = 0;
     foreach ($view->argument as $k => $v) {
-      __drupal_extra_views_query_alter($view, $query, $v);
+      __drupal_extra_views_query_alter($view, $query, $v, $count++);
     }
   }
   if (is_array($view->filter)) {
+    $count = 0;
     foreach ($view->filter as $k => $v) {
-      __drupal_extra_views_query_alter($view, $query, $v);
+      __drupal_extra_views_query_alter($view, $query, $v, $count++);
     }
   }
   if (is_array($view->relationship)) {
+    $count = 0;
+
     foreach ($view->relationship as $k => $v) {
       // dextra|table:field_all_turns FEATURE
-      __drupal_extra_views_query_alter($view, $query, $v);
+      __drupal_extra_views_query_alter($view, $query, $v, $count++);
     }
   }
 }
-function __drupal_extra_views_query_alter(&$view, &$query, $v) {
+function __drupal_extra_views_query_alter(&$view, &$query, $v, $argument_key) {
   if (isset($v->options['ui_name']) && $v->options['ui_name'] && substr($v->options['ui_name'], 0, 6) == 'dextra') {
     $options = drupal_extra_to_options($v->options['ui_name']);
     if (isset($options['equal']) || isset($options['contain'])) {
@@ -48,7 +52,8 @@ function __drupal_extra_views_query_alter(&$view, &$query, $v) {
           }
           if ($subcond['field'] == $field && $subcond['operator'] == 'IS NOT NULL') {
             $query->where[$key]['conditions'][$subkey]['operator'] = 'LIKE';
-            $date = drupal_extra_views_get_argument_smart($view, 'date');
+            $pos = isset($options['join'][3]) ? $options['join'][3] : 0;
+            $date = drupal_extra_views_get_argument_smart($view, 'date', $pos);
             $query->where[$key]['conditions'][$subkey]['value'] = '%' . $date;
           }
         }
@@ -60,8 +65,9 @@ function __drupal_extra_views_query_alter(&$view, &$query, $v) {
         $query->table_queue[$table]['join']->table = $query->table_queue[$table]['table'] = $options['table'];
       }
     }
-    if (isset($options['morejoin'])) {
-      unset($query->table_queue['field_data_field_agent']);
+    if (isset($options['morejoin']) || isset($options['converttosingletable'])) {
+      $remove_data_field = isset($v->first_alias) ? $v->first_alias : 'field_data_field_agent';
+      unset($query->table_queue[$remove_data_field]);
       $table = $v->alias;// Consider to use $v->alias Could buggy here
       if (isset($query->table_queue[$table])) {
         $query->table_queue[$table]['join']->table = $query->table_queue[$table]['table'] = 'eck_daily_report_agents';
@@ -72,14 +78,27 @@ function __drupal_extra_views_query_alter(&$view, &$query, $v) {
     }
     if (isset($options['join'])) {
       $table = $v->alias;
-      $date = drupal_extra_views_get_argument_smart($view, 'date');
+      $pos = isset($options['join'][3]) ? $options['join'][3] : 0;
+      $date = drupal_extra_views_get_argument_smart($view, 'date', $pos);
 
       $query->table_queue[$table]['join']->extra = array('' . $table . '.title LIKE \'%'. $date .'\'');
     }
     if (isset($options['fieldcompare'])) {
-      _scan_conditions($query, '__fieldcompare_valid', '__fieldcompare_execute');
+      _scan_conditions($query, $v, '__fieldcompare_valid', '__fieldcompare_execute');
+    }
+    if (isset($options['addor'])) {
+      _scan_conditions($query, $v, '__addor_valid', '__addor_execute');
     }
   }
+}
+function __addor_valid($subcond, $field) {
+  $key = $field->table_alias . '.' . $field->real_field;
+  return (strpos($subcond['field'], $key) !== FALSE);
+}
+
+function __addor_execute(&$subcond, $field) {
+  $key = $field->table_alias . '.' . $field->real_field;
+  $subcond['field'] = '('. $key .' IS NULL) OR ('. $subcond['field'] .')';
 }
 
 function __fieldcompare_valid($subcond) {
@@ -113,7 +132,7 @@ function __fieldcompare_execute(&$subcond) {
   $subcond["operator"] = "LIKE";
 }
 
-function _scan_conditions($query, $matchcallback, $callback) {
+function _scan_conditions($query, $field, $matchcallback, $callback) {
   foreach ($query->where as $key => $cond) {
     if (!isset($cond['conditions'])) {
       continue ;
@@ -122,15 +141,15 @@ function _scan_conditions($query, $matchcallback, $callback) {
       if (!isset($subcond['field'])) {
         continue ;
       }
-      if ($matchcallback($subcond)) {
-        $callback($query->where[$key]['conditions'][$subkey], $key, $subkey);
+      if ($matchcallback($subcond, $field)) {
+        $callback($query->where[$key]['conditions'][$subkey], $field, $key, $subkey);
       }
     }
   }
 }
 
-function drupal_extra_views_get_argument_smart($view, $key) {
-  $date = isset($view->args[0]) ? $view->args[0] : '';
+function drupal_extra_views_get_argument_smart($view, $key, $argument_key = 0) {
+  $date = isset($view->args[$argument_key]) ? $view->args[$argument_key] : '';
   if (isset($view->exposed_input[$key])) {
     $date = $view->exposed_input[$key];
   }

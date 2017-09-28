@@ -11,6 +11,7 @@ dextra|table:field_tir_all
 
 3. More join
 dextra|morejoin:morejoin
+dextra|converttosingletable:converttosingletable
 
 4. Equal date
 dextra|equal:equal
