@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * Implements hook_page_alter().
+ */
+function visitors_extra_page_alter(&$page) {
+  // Attach Ajax page count visitors_extra if configured.
+  if (variable_get('visitors_extra_views_ajax', 0)) {
+    $visitors_extra = drupal_get_path('module', 'visitors_extra') . '/visitors_extra.js';
+    $page['content']['#attached']['js'][$visitors_extra] = array(
+      'scope' => 'footer',
+    );
+    $url = url(drupal_get_path('module', 'visitors_extra') . '/visitors_extra.php');
+    $settings = array('data' => array(
+      'visitors_get_url' => visitors_get_url(),
+      'visitors_get_referer' => visitors_get_referer(),// This is fixed via JS
+      'visitors_get_path' => visitors_get_path(),
+      'visitors_get_title' => visitors_get_title(),
+      'url' => $url,
+    ), 'url' => $url);
+    $page['content']['#attached']['js'][] = array(
+      'data' => array('visitors_extra' => $settings),
+      'type' => 'setting',
+    );
+    // Disable exit code in visitors
+    variable_set('visitors_disable', 0);
+  }
+}

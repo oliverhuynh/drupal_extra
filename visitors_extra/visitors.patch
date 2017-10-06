@@ -1,0 +1,18 @@
+ visitors.exit.inc | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/visitors.exit.inc b/visitors.exit.inc
+index 65e2da2..2653805 100644
+--- a/visitors.exit.inc
++++ b/visitors.exit.inc
+@@ -222,6 +222,10 @@ function visitors_get_browscap_data($user_agent) {
+  * Implements hook_exit().
+  */
+ function visitors_exit() {
++  if (variable_get('visitors_disable', 0)) {
++    return ;
++  }
++
+   drupal_bootstrap(DRUPAL_BOOTSTRAP_SESSION);
+   drupal_load('module', 'user');
+ 
