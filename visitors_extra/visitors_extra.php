@@ -32,26 +32,7 @@ if (isset($_POST['url'])) {
         'visitors_title'          => $_POST['visitors_get_title'],
         'visitors_user_agent'     => visitors_get_user_agent()
       );
-
-      if (module_exists('visitors_geoip')) {
-        $geoip_data = visitors_get_geoip_data($ip_str);
-
-        $fields['visitors_continent_code'] = $geoip_data['continent_code'];
-        $fields['visitors_country_code']   = $geoip_data['country_code'];
-        $fields['visitors_country_code3']  = $geoip_data['country_code3'];
-        $fields['visitors_country_name']   = $geoip_data['country_name'];
-        $fields['visitors_region']         = $geoip_data['region'];
-        $fields['visitors_city']           = $geoip_data['city'];
-        $fields['visitors_postal_code']    = $geoip_data['postal_code'];
-        $fields['visitors_latitude']       = $geoip_data['latitude'];
-        $fields['visitors_longitude']      = $geoip_data['longitude'];
-        $fields['visitors_dma_code']       = $geoip_data['dma_code'];
-        $fields['visitors_area_code']      = $geoip_data['area_code'];
-      }
-
-      db_insert('visitors')
-        ->fields($fields)
-        ->execute();
+      visitors_extra_do_insert($$fields);
     }
   }
 }
