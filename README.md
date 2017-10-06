@@ -1,3 +1,15 @@
+The module enhances the feature of other great contributes modules.
+Current enhanced modules are:
+- Computed Field, Computed Field Tools
+- Field Query
+- Views Summarize
+- Visitors
+
+The list will be continued.
+Mostly are tiny fixes so I can't move it to separate single module.
+
+Once an extra module's fixes is merged to official module, this extra module will be removed out. Please let me know your request if you're one of the author of the module.
+
 # drupal_extra
 A. DEXTRA merge table
 1. To use dextra, create view
