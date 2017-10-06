@@ -22,7 +22,5 @@ function visitors_extra_page_alter(&$page) {
       'data' => array('visitors_extra' => $settings),
       'type' => 'setting',
     );
-    // Disable exit code in visitors
-    variable_set('visitors_disable', 0);
   }
 }
