@@ -32,7 +32,7 @@ if (isset($_POST['url'])) {
         'visitors_title'          => $_POST['visitors_get_title'],
         'visitors_user_agent'     => visitors_get_user_agent()
       );
-      visitors_extra_do_insert($fields);
+      visitors_extra_do_insert($fields, $_POST);
     }
   }
 }
