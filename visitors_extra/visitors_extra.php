@@ -13,6 +13,7 @@ if (isset($_POST['url'])) {
   // Change the directory to the Drupal root.
   chdir(DRUPAL_ROOT);
 
+  $base_url = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'];
   include_once DRUPAL_ROOT . '/includes/bootstrap.inc';
   drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
   global $user;
