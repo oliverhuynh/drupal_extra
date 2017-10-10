@@ -190,6 +190,9 @@ function visitors_extra_data_default() {
         'views_argument_handler' => 'views_handler_argument_numeric',
         'views_sort_handler' => 'views_handler_sort',
       ),
+      'visitors_get_nid_uuid' => array(
+        'label' => '',
+      ),
     ),
     'join' => array(
       'users' => array(

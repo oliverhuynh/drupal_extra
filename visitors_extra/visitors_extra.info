@@ -1,5 +1,5 @@
 name = Visitors Extra
-description = 1. Ajaxify 2. Views 3. Date support
+description = 1. Ajaxify 2. Views 3. Date support 4. NID
 core = 7.x
 package = Other
 dependencies[] = ctools
@@ -10,4 +10,4 @@ features[ctools][] = data:data_default:1
 features[ctools][] = views:views_default:3.0
 features[data_tables][] = visitors
 features[features_api][] = api:2
-mtime = 1507615410
+mtime = 1507623876

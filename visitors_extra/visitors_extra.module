@@ -26,8 +26,10 @@ function visitors_extra_page_alter(&$page) {
     $url = url(drupal_get_path('module', 'visitors_extra') . '/visitors_extra.php');
     $n = menu_get_object();
     $nuuid = isset($n->uuid) ? $n->uuid : "";
+    $nid = isset($n->nid) ? $n->nid : "";
     $settings = array('data' => array(
       'visitors_get_nid_uuid' => $nuuid,
+      'visitors_nid' => $nid,
       'visitors_get_url' => visitors_get_url(),
       'visitors_get_referer' => visitors_get_referer(),// This is fixed via JS
       'visitors_get_path' => visitors_get_path(),

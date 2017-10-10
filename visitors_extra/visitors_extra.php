@@ -27,6 +27,7 @@ if (isset($_POST['url'])) {
         'visitors_uid'            => $user->uid,
         'visitors_ip'             => $ip_str,
         'visitors_date_time'      => time(),
+        'visitors_nid' => $_POST['visitors_nid'],
         'visitors_url'            => $_POST['visitors_get_url'],
         'visitors_referer'        => $_POST['visitors_get_referer'],
         'visitors_path'           => $_POST['visitors_get_path'],
