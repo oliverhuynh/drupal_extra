@@ -1,4 +1,17 @@
 <?php
+/**
+ * @file
+ * Code for the Visitors Extra feature.
+ */
+
+include_once 'visitors_extra.features.inc';
+
+/**
+ * Implements hook_date_views_extra_tables().
+ */
+function visitors_extra_date_views_extra_tables() {
+  return array('visitors' => 'visitors');
+}
 
 /**
  * Implements hook_page_alter().
