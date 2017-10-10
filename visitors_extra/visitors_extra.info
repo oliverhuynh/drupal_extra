@@ -10,4 +10,5 @@ features[ctools][] = data:data_default:1
 features[ctools][] = views:views_default:3.0
 features[data_tables][] = visitors
 features[features_api][] = api:2
-mtime = 1507623876
+features[views_view][] = myvisitors
+mtime = 1507626243
