@@ -1,0 +1,4 @@
+name = ECK Extra
+description = 1. Entity edit by title
+core = 7.x
+package = Other

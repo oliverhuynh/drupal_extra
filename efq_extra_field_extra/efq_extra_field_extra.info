@@ -1,5 +1,5 @@
 name = EntityFieldQuery Extra
-description = EntityFieldQuery Extra
+description = 1. Add where. 2. Add expressions. 3. Add custom order
 core = 7.x
 dependencies[] = efq_extra_field
 files[] = EntityFieldQuerySpecialExtra.inc

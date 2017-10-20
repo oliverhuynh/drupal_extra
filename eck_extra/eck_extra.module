@@ -1,0 +1,107 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function eck_extra_menu() {
+
+  $menu = array();
+  module_load_include('inc', 'eck', 'eck.entity_type');
+  module_load_include('inc', 'eck', 'eck.bundle');
+  module_load_include('inc', 'eck', 'eck.entity');
+  foreach (EntityType::loadAll() as $entity_type) {
+    foreach (Bundle::loadByEntityType($entity_type) as $bundle) {
+      $crud_info = get_bundle_crud_info($entity_type->name, $bundle->name);
+      if ($crud_info && isset($crud_info['edit']) && isset($crud_info['add'])) {
+        $action = 'edit';
+        $action_label = ucfirst($action);
+        $info = $crud_info['edit'];
+        $args = array();
+
+        if (array_key_exists('entity_id', $info)) {
+          $args[] = $info['entity_id'];
+        }
+        $args = array_merge(array($entity_type->name, $bundle->name), $args);
+        $args[] = $info['path'];
+        $args[] = $crud_info['add']['path'];
+        $access_args = array_merge(array($action), $args);
+        $path = str_replace('%eckentity', '%eckentitylabel', $info['path']);
+        $menu[$path . '/eet'] = array(
+          'title' => "{$action_label} {$bundle->label}",
+          'description' => "{$action_label} an entity of type {$entity_type->label} with bundle {$bundle->label}",
+          'page callback' => "eet_eck__entity__edit",
+          'page arguments' => $args,
+          'load arguments' => array($entity_type->name),
+          'access callback' => 'eet_eck__entity_menu_access',
+          'access arguments' => $access_args,
+          'file path' => drupal_get_path('module', 'eck'),
+          'file' => 'eck.entity.inc',
+        );
+      }
+    }
+  }
+  return $menu;
+}
+
+function eet_eck__entity__edit($entity_type_name, $bundle_name, $entity_id, $edit_path, $new_path) {
+  if ($entity_id === TRUE) {
+    drupal_goto($new_path);
+  }
+  $entity_id = is_object($entity_id) ? $entity_id->id : $entity_id;
+
+  // Edit link is not correct
+  $friendly_edit_url = $entity_type_name . '/' . $bundle_name . '/' . $entity_id . '/edit';
+  if (drupal_valid_path($friendly_edit_url)) {
+    $path = $friendly_edit_url;
+  }
+  else {
+    $path = str_replace('%eckentity', $entity_id, $edit_path);
+  }
+
+  drupal_goto($path);
+  return "xxx";
+}
+
+function eet_eck__entity_menu_access($action, $entity_type_name, $bundle_name, $entity_id = NULL) {
+  return TRUE;
+}
+/**
+ * Load callback for %eckentitylabel.
+ */
+function eckentitylabel_load($title, $type) {
+  $entity = FALSE;
+  try{
+    $entity = entity_load_single_by_title($type, $title);
+  }
+  catch (Exception $ex) {
+    // drupal_not_found();
+    // exit();
+  }
+
+  return $entity ? $entity : TRUE;
+}
+
+function entity_load_single_by_title($type, $title, $levkey = 0) {
+  $static = &drupal_static(__FUNCTION__);
+  $key = $type . '_' . $title;
+  if (isset($static[$key])) {
+    return $static[$key];
+  }
+  // TODO: Use restapi instead
+  $query = new EntityFieldQuerySpecialExtra();
+  $entities = $query->entityCondition('entity_type', $type)
+    ->addExpression('levenshtein(title, :title)', 'lev', array(":title" => $title))
+    ->customWhere("levenshtein(title, :title) <= :lev", array(":title" => $title, ":lev" => $levkey))
+    ->orderBy("lev")
+    ->range(0,1)
+    ->execute();
+
+  $final_entity = FALSE;
+  if (!empty($entities[$type])) {
+    $final_entities = entity_load($type, array_keys($entities[$type]));
+    $final_entity = current($final_entities);
+  }
+
+  $static[$key] = $final_entity;
+  return $final_entity;
+}
