@@ -1,0 +1,131 @@
+<?php
+
+/**
+ * Implements hook_menu_alter().
+ */
+function pagepreview_extra_menu_alter(&$items) {
+  $items['pagepreview-remote/%'] = array('page callback' => 'pagepreview_extra_deliver_page') + $items['pagepreview/%'];
+}
+
+/**
+ * Implements hook_services_resources().
+ */
+function pagepreview_extra_services_resources() {
+  $resource['pagepreview'] = array(
+    'operations' => array(
+      'retrieve' => array(
+        'help' => t('Get page preview item'),
+        'callback' => 'pagepreview_extra_services_resources_get_page_preview',
+        'access callback' => 'user_access',
+        'access arguments' => array('access content'),
+        'access arguments append' => FALSE,
+        'args' => array(
+          array(
+            'name' => 'preview_id',
+            'type' => 'string',
+            'optional' => FALSE,
+            'description' => t("Page preview id"),
+            'source' => array('path' => 0),
+          ),
+        ),
+      ),
+    ),
+  );
+  return $resource;
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Replaces the default submit callback for the "Preview" button.
+ */
+function pagepreview_extra_form_alter(&$form, &$form_state, $form_id) {
+  if (!empty($form['#node_edit_form'])) {
+    if ($form['actions']['preview']) {
+      $form['actions']['preview']['#submit'] = array('pagepreview_extra_node_form_build_preview_ensure_unpublish', 'node_form_submit', 'pagepreview_extra_node_form_build_preview_redirect');
+    }
+    if (isset($_GET['preview']) && $_GET['preview']) {
+      $new_url = variable_get("pagepreview_extra_base_path", base_path());
+      if ($new_url) {
+        $node = $form['#node'];
+        $form['#prefix'] = '<iframe class="pagepreview-preview" src="' . $new_url . 'pagepreview-remote/'. $node->uuid .'?trace=pnb&subscriber=1"></iframe>';
+      }
+    }
+  }
+}
+
+function pagepreview_extra_node_form_build_preview_ensure_unpublish($form, &$form_state) {
+  $form_state['values']['status'] = 0;
+  $form_state['values']['revision'] = TRUE;
+}
+
+function pagepreview_extra_node_form_build_preview_redirect($form, &$form_state) {
+  $form_state['redirect'] = array('node/' . $form_state['nid'] . '/edit', array('query' => array('preview' => TRUE)));
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ *
+ * Ensure this to be after pagepreview
+ */
+function pagepreview_extra_module_implements_alter(&$implementations, $hook) {
+  if ($hook === 'form_alter') {
+    $group = $implementations['pagepreview_extra'];
+    unset($implementations['pagepreview_extra']);
+    $implementations['pagepreview_extra'] = $group;
+  }
+}
+
+function pagepreview_extra_node_form_build_preview($form, &$form_state) {
+  if (isset($form_state['node_preview'])) {
+    $new_url = variable_get("pagepreview_extra_base_path", base_path());
+    $form_state['node_preview'] = str_replace(base_path() . 'pagepreview/', $new_url . 'pagepreview-remote/', $form_state['node_preview']);
+  }
+}
+
+function pagepreview_extra_services_resources_get_page_preview($preview_id) {
+  return pagepreview_cache_get($preview_id);
+}
+
+function pagepreview_extra_deliver_page($uuid) {
+  global $conf;
+  $conf['x_frame_options'] = FALSE;
+  $node = entity_uuid_load("node", array($uuid));
+  $node = $node ? current($node) : FALSE;
+  if ($node) {
+    $node = node_load($node->nid);
+    $preview_id = "tmp-" . $uuid;
+    $node = (object) $node;
+    $node->status = 1;
+
+    cache_set($preview_id, $node, 'cache_pagepreview', CACHE_TEMPORARY);
+    $path = $_GET['q'] = 'node/' . $node->nid;
+
+    // Put node to menu_get_object
+    $newnode = menu_get_object();
+    $router_items = &drupal_static('menu_get_item');
+    $router_items[$path]['load_functions'][1] = "node_load";
+    $router_items[$path]['map'][1] = $node;
+    $r = menu_get_object();
+    return pagepreview_deliver_page($preview_id);
+  }
+  return "XXX";
+}
+
+function pagepreview_extra_get_preview_external($preview_id) {
+  if (!($connect_name = variable_get('pagepreview_extra_client_name', ''))) {
+    return FALSE;
+  }
+
+  try {
+    $connection = services_client_connection_get($connect_name);
+    $node = $connection->get('pagepreview', $preview_id);
+
+    return $node;
+  }
+  catch (ServicesClientConnectionResponseException $e) {
+    $e->log();
+    return FALSE;
+  }
+  return FALSE;
+}
