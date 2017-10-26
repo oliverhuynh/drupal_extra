@@ -57,6 +57,7 @@ function pagepreview_extra_form_alter(&$form, &$form_state, $form_id) {
 function pagepreview_extra_node_form_build_preview_ensure_unpublish($form, &$form_state) {
   $form_state['values']['status'] = 0;
   $form_state['values']['revision'] = TRUE;
+  unset($_GET['destination'], $_REQUEST['destination']);
 }
 
 function pagepreview_extra_node_form_build_preview_redirect($form, &$form_state) {
