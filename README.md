@@ -1,3 +1,6 @@
+I have added two date null filter and date null contextual argument. Developer can use this to embed a null date argument/filter so the date fields or pager will be show but the query is not affected.
+Developers can use this to show other value for the views.
+
 The module enhances the feature of other great contributes modules.
 Current enhanced modules are:
 - Computed Field, Computed Field Tools

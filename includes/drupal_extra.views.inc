@@ -14,5 +14,11 @@ function drupal_extra_views_data_alter(&$data) {
     'argument' => array(
       'handler' => 'views_handler_argument_date_null',
     ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date_null',
+      'empty field name' => t('Undated'),
+      'is date' => TRUE,
+      // 'skip base' => $base_table,
+    ),
   );
 }
