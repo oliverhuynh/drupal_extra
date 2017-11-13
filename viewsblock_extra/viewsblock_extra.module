@@ -1,0 +1,33 @@
+<?php
+
+/**
+ * Implements hook_boxes_plugins().
+ */
+function viewsblock_extra_boxes_plugins() {
+  $info = array();
+  $path = drupal_get_path('module', 'viewsblock_extra') . '/plugins';
+  $info['views'] = array(
+    'title' => 'Views Block',
+    'handler' => array(
+      'parent' => 'box',
+      'class' => 'boxes_views',
+      'file' => 'boxes_views.inc',
+      'path' => $path,
+    ),
+  );
+  return $info;
+}
+
+function vb_get_available_views() {
+  global $theme;
+  $xtheme = variable_get('theme_default', $theme);
+  $path = path_to_theme() . '/' . $xtheme . '.info';
+  $info = drupal_parse_info_file($path);
+  if (isset($info['viewsblock_extra'])) {
+    $item = array();
+    foreach ($info['viewsblock_extra'] as $k => $v) {
+      $item[] = drupal_extra_to_options($v);
+    }
+  }
+  return $item;
+}

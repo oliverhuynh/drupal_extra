@@ -1,0 +1,5 @@
+name = Views Block Extra
+description = Provide Views Block Configurable with multiple instances
+core = 7.x
+package = Views
+files[] = plugins/boxes_views.inc
