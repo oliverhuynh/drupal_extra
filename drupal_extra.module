@@ -87,10 +87,24 @@ function __drupal_extra_views_query_alter(&$view, &$query, $v, $argument_key) {
       _scan_conditions($query, $v, '__fieldcompare_valid', '__fieldcompare_execute');
     }
     if (isset($options['addor'])) {
-      _scan_conditions($query, $v, '__addor_valid', '__addor_execute');
+      _scan_table_queue($query, $v, '__addor_table_valid', '__addor_table_execute', $options);
+      _scan_conditions($query, $v, '__addor_valid', '__addor_execute', $options);
     }
   }
 }
+
+function __addor_table_valid($subcond, $field) {
+  return $subcond['table'] == $field->table;
+}
+
+function __addor_table_execute(&$subcond, $field, $key, $options) {
+  $subcond['join']->extra[] = array(
+    'field' => $options['addor'][1],
+    'value' => $options['addor'][2],
+    'numeric' => TRUE,
+  );
+}
+
 function __addor_valid($subcond, $field) {
   $key = $field->table_alias . '.' . $field->real_field;
   return (strpos($subcond['field'], $key) !== FALSE);
@@ -132,7 +146,18 @@ function __fieldcompare_execute(&$subcond) {
   $subcond["operator"] = "LIKE";
 }
 
-function _scan_conditions($query, $field, $matchcallback, $callback) {
+function _scan_table_queue($query, $field, $matchcallback, $callback, $options = array()) {
+  foreach ($query->table_queue as $key => $cond) {
+    if (!isset($cond['join'])) {
+      continue ;
+    }
+    if ($matchcallback($cond, $field, $options)) {
+      $callback($query->table_queue[$key], $field, $key, $options);
+    }
+  }
+}
+
+function _scan_conditions($query, $field, $matchcallback, $callback, $options = array()) {
   foreach ($query->where as $key => $cond) {
     if (!isset($cond['conditions'])) {
       continue ;
