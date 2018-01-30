@@ -296,6 +296,66 @@ function drupal_extra_create_field_all_view($fieldname, $key) {
   GROUP BY entity_id");
 }
 
+function __get_results_key($view) {
+  $key_data = array(
+    'get_exposed_input' => $view->get_exposed_input(),
+    'args' => $view->args,
+  );
+  return $view->name . ':' . $view->current_display . ':results:' . md5(serialize($key_data));
+}
+
+function de_views_get_view_result_first_cached($key, $name, $display_id = NULL, $exposed_filters = array()) {
+  $args = func_get_args();
+  array_shift($args);
+  array_shift($args);
+
+  // remove $key, $name
+  if (count($args)) {
+    array_shift($args);
+
+    // remove $display_id
+    array_shift($args);
+
+    // remove $exposed_filters
+  }
+
+  // Performance debug
+  $view = views_get_view($name);
+  if (count($args)) {
+    $view->set_arguments($args);
+  }
+  $view->set_display($display_id);
+  $view->set_exposed_input($exposed_filters);
+  $cached_key = __get_results_key($view);
+  $result = variable_get("de_res" . $cached_key, '');
+  if ($result === "") {
+    $view->pre_execute();
+    $view->execute();
+    variable_set("de_res" . $cached_key, $view->result);
+    /*
+    static $debugged;
+    if (!isset($debugged) || $debugged <= 2) {
+      $key_data = array(
+        'get_exposed_input' => $view->get_exposed_input(),
+        'args' => $view->args,
+      );
+      $debugged = !isset($debugged) ? 1 : $debugged + 1;
+      dsm($view->result);
+      dsm($key_data);
+    }*/
+    if (isset($view->result) && $view->result) {
+      $result = $view->result;
+    }
+  }
+
+  if ($result) {
+    $tmp = current($result);
+    return $key ? $tmp->{$key} : current($tmp);
+  }
+
+  return 0;
+}
+
 function de_views_get_view_result_first($key, $name, $display_id = NULL, $exposed_filters = array()) {
   $args = func_get_args();
   array_shift($args);

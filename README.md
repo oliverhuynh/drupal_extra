@@ -40,9 +40,12 @@ Replace the field to compare
 7. To reference only the 1st product in commerce relationship use this dextra in the relation ship in the views
 dextra|addor:delta:0
 
-New merge table for field
+8. New merge table for field
 CREATE VIEW field_data_field_betting_all AS
   SELECT *, GROUP_CONCAT(DISTINCT CONCAT("(", field_betting_value, ")") SEPARATOR '+') as field_betting_merged FROM `field_data_field_betting`
   GROUP BY entity_id
 OR use this API
 drupal_extra_create_field_all_view("field_betting", "value");
+
+
+9. The performance to get first view result affects a lot, one more API to solve this. Function de_views_get_view_result_first_cached
