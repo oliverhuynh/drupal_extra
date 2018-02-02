@@ -304,6 +304,34 @@ function __get_results_key($view) {
   return $view->name . ':' . $view->current_display . ':results:' . md5(serialize($key_data));
 }
 
+function _de_views_get_view_result_first_cached_data($key, $setdata = FALSE, $reset = FALSE) {
+  $data = &drupal_static(__FUNCTION__);
+  $uniquekey = "dr2:" . $key;
+
+  // If this is a reset
+  if ($reset) {
+    unset($data[$uniquekey]);
+    cache_clear_all($uniquekey, 'cache');
+  }
+
+  // If this is a GET from cache
+  if ($setdata === FALSE) {
+    // Get from db
+    if (!isset($data) || !isset($data[$uniquekey])) {
+      if (($cache = cache_get($uniquekey)) && ((!$cache->expire) || REQUEST_TIME < $cache->expire)) {
+        $data[$uniquekey] = $cache->data;
+      }
+    }
+
+    return isset($data[$uniquekey]) ? $data[$uniquekey] : "";
+  }
+
+  // If this is a SET
+  $data[$uniquekey] = $setdata;
+  cache_set($uniquekey, $setdata);
+  return FALSE;
+}
+
 function de_views_get_view_result_first_cached($key, $name, $display_id = NULL, $exposed_filters = array()) {
   $args = func_get_args();
   array_shift($args);
@@ -327,22 +355,30 @@ function de_views_get_view_result_first_cached($key, $name, $display_id = NULL, 
   $view->set_display($display_id);
   $view->set_exposed_input($exposed_filters);
   $cached_key = __get_results_key($view);
-  $result = variable_get("de_res" . $cached_key, '');
-  if ($result === "") {
-    $view->pre_execute();
-    $view->execute();
-    variable_set("de_res" . $cached_key, $view->result);
-    /*
-    static $debugged;
+  $result = _de_views_get_view_result_first_cached_data($cached_key);
+
+  if (isset($_GET['debug']) || drupal_is_cli()) {
+    global $debugged;
     if (!isset($debugged) || $debugged <= 2) {
       $key_data = array(
         'get_exposed_input' => $view->get_exposed_input(),
         'args' => $view->args,
+        'result' => $result
       );
       $debugged = !isset($debugged) ? 1 : $debugged + 1;
       dsm($view->result);
       dsm($key_data);
-    }*/
+      //-----------DEBUGGING----------
+      watchdog('DEBUG', __FUNCTION__ . print_r($key_data, TRUE));
+      //-----------END DEBUGGING----------
+    }
+  }
+
+  if ($result === "") {
+    $view->pre_execute();
+    $view->execute();
+
+    _de_views_get_view_result_first_cached_data($cached_key, $view->result);
     if (isset($view->result) && $view->result) {
       $result = $view->result;
     }
