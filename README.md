@@ -49,3 +49,6 @@ drupal_extra_create_field_all_view("field_betting", "value");
 
 
 9. The performance to get first view result affects a lot, one more API to solve this. Function de_views_get_view_result_first_cached
+
+10. field_collection_tabs_extra
+Fix JS and CSS for the JQUERY UI TABS

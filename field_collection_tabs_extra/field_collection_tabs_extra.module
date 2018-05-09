@@ -1,0 +1,16 @@
+<?php
+
+/*
+ * Implement of hook_field_attach_view_alter
+ */
+function field_collection_tabs_extra_field_attach_view_alter(&$output, $context) {
+  foreach (element_children($output) as $field_name) {
+    $element =& $output[$field_name];
+    if ($element['#formatter'] == 'field_collection_tabs') {
+      foreach (element_children($element) as $field_delta) {
+        $element[$field_delta]['#attached']['js'][0] = drupal_get_path('module', 'field_collection_tabs_extra') . '/field_collection_tabs_extra.js';
+        $element[$field_delta]['#attached']['css'][0] = drupal_get_path('module', 'field_collection_tabs_extra') . '/field_collection_tabs_extra.css';
+      }
+    }
+  }
+}
