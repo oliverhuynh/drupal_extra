@@ -8,5 +8,7 @@ http://dev.jufist.org/scsstocss/compiled/1525857324-5af2bc2c02f93.css
 .field-collection-tabs .ui-corner-all, .field-collection-tabs .ui-corner-top, .field-collection-tabs .ui-corner-left, .field-collection-tabs .ui-corner-right, .field-collection-tabs .ui-corner-bottom { border: none; }
 /* line 12, ../in/1525857324-5af2bc2c02f93.scss */
 .field-collection-tabs.ui-tabs .ui-tabs-nav li { background: none !important; }
+/* line 14, ../in/1525857324-5af2bc2c02f93.scss */
+.field-collection-tabs.ui-tabs .ui-tabs-nav li a { padding: 4px 10px; }
 
 /* END. Saved and compiled at http://dev.jufist.org/scsstocss/1525857324-5af2bc2c02f93 */
