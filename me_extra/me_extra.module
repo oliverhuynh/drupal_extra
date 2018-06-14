@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * Implements hook_views_api().
+ */
+function me_extra_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'me_extra') . '/includes/views',
+  );
+}
+
+/**
+ * Implements hook_permission().
+ */
+function me_extra_permission() {
+  return array(
+    'access all other uids' => array(
+      'title' => t('access all other uids'),
+      'description' => t('access all other uids'),
+    ),
+  );
+}
