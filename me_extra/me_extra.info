@@ -1,0 +1,9 @@
+name = 'me' Aliases Extra
+description = Me or uid or admin argument
+core = 7.x
+
+dependencies[] = token
+
+files[] = me_extra.module
+files[] = includes/views/me_extra.views.inc
+files[] = includes/views/handlers/me_extra_plugin_argument_validate_me_alias.inc
